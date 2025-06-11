@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 // Hardcode the production API URL
-const API_URL = 'https://live-backend-2.onrender.com';
+const API_URL = 'https://live-backend-3.onrender.com';
 
 // Add axios interceptor for authentication
 axios.interceptors.request.use(
@@ -66,7 +66,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     try {
       console.log('Attempting to sign in with:', API_URL);
-      const response = await axios.post(`${API_URL}/signin`, {
+      const response = await axios.post(`${API_URL}/api/signin`, {
         email: credentials.email,
         password: credentials.password,
       });
