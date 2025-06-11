@@ -2,7 +2,34 @@ import { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// Hardcode the production API URL
+const API_URL = 'https://live-backend-2.onrender.com';
+
+// Add axios interceptor for authentication
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor to handle errors
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.code === 'ERR_NETWORK') {
+      console.error('Network error - please check your connection and try again');
+    }
+    return Promise.reject(error);
+  }
+);
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -38,21 +65,22 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axios.post(`${API_URL}/api/signin`, {
+      console.log('Attempting to sign in with:', API_URL);
+      const response = await axios.post(`${API_URL}/signin`, {
         email: credentials.email,
         password: credentials.password,
       });
 
-      // Simulate delay (optional)
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      const userData = response.data;
+      const { user: userData, token } = response.data;
       setUser(userData);
       setIsAuthenticated(true);
       localStorage.setItem("user", JSON.stringify(userData));
+      localStorage.setItem("token", token);
       navigate("/dashboard");
     } catch (error) {
-      setError(error.response?.data?.message || "Sign in failed");
+      console.error('Sign in error:', error);
+      const errorMessage = error.response?.data?.message || "Sign in failed";
+      setError(errorMessage);
       throw error;
     } finally {
       setIsLoading(false);
